@@ -11,14 +11,14 @@ description: 调试修复流程编排：定位根因 → 写测试 → 最小修
 | Phase | 做什么 | Skill |
 |-------|--------|-------|
 | 0. Context Sync | `git status` + `git log -5`，重读 CLAUDE.md / MEMORY.md。确认当前分支状态 | — |
-| 1. Root Cause | 收集证据，复现问题，定位根因。**禁止未定位根因就动手修** | — |
-| 2. Test First | 针对根因写失败测试，确认测试确实失败（RED） | — |
-| 3. Minimal Fix | 写最小修复代码让测试通过（GREEN），不做额外重构 | — |
+| 1. Root Cause | 收集证据，复现问题，定位根因。**禁止未定位根因就动手修** | `superpowers:systematic-debugging` |
+| 2. Test First | 针对根因写失败测试，确认测试确实失败（RED） | `superpowers:test-driven-development` |
+| 3. Minimal Fix | 写最小修复代码让测试通过（GREEN），不做额外重构 | `superpowers:test-driven-development` |
 | 3b. Diff Review | 审查修复的 `git diff`：新增常量是否与现有约定一致、是否引入回归 | — |
-| 4. Verify | 全量测试 + **运行时验证修复路径和相邻路径**（防止修 A 坏 B） | — |
+| 4. Verify | 全量测试 + **运行时验证修复路径和相邻路径**（防止修 A 坏 B） | `superpowers:verification-before-completion` |
 | 5. Knowledge Sync | 修复揭示了新约束/陷阱？→ 写入 rules/ 或 CLAUDE.md，防止再犯 | — |
-| 6. Review | 修复涉及 3+ 文件或核心逻辑时，派 code-reviewer 审查 | — |
-| 7. Commit | 安全检查 + 提交 | — |
+| 6. Review | 修复涉及 3+ 文件或核心逻辑时，派 code-reviewer 审查 | `superpowers:requesting-code-review` |
+| 7. Commit | 安全检查 + 提交 | `commit` |
 
 ## 规则
 

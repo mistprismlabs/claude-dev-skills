@@ -11,15 +11,15 @@ description: 完整开发流程编排：context check → research → plan → 
 | Phase | 做什么 | Skill |
 |-------|--------|-------|
 | 0. Context Sync | `git status` + `git log -5`，重读 CLAUDE.md / MEMORY.md。发现异常 → 告知用户，等确认 | — |
-| 1. Research | 读相关代码和文档。需求模糊 → 提问澄清 | — |
-| 2. Plan | 产出实施计划，存 `docs/plans/YYYY-MM-DD-<topic>.md` | — |
-| 2b. Worktree | 3+ 文件或使用 subagent 时必须先建 worktree | — |
-| 3. Execute | subagent 逐任务执行（见下方 subagent 规则） | — |
+| 1. Research | 读相关代码和文档。需求模糊 → 提问澄清 | `superpowers:brainstorming` |
+| 2. Plan | 产出实施计划，存 `docs/plans/YYYY-MM-DD-<topic>.md` | `superpowers:writing-plans` |
+| 2b. Worktree | 3+ 文件或使用 subagent 时必须先建 | `superpowers:using-git-worktrees` |
+| 3. Execute | subagent 逐任务执行（见下方 subagent 规则） | `superpowers:subagent-driven-development` |
 | 3b. Diff Review | 主窗口审查 `git diff`，重点检查关键变更点（见下方规则） | — |
-| 4. Verify | 应用无崩溃 + 关键路径运行时验证。有 bug → /dev-fix | — |
+| 4. Verify | 应用无崩溃 + 关键路径运行时验证。有 bug → /dev-fix | `superpowers:verification-before-completion` + `superpowers:systematic-debugging` |
 | 4b. E2E | 涉及用户交互流程时，手动或脚本模拟操作路径 | — |
 | 5. Knowledge Sync | **更新知识体系**（见下方规则） | — |
-| 6. Handback | 重要改动先过 code review，报告：改了什么 / 验证结果 / 需测试的路径 | — |
+| 6. Handback | 重要改动先过 code-reviewer，报告：改了什么 / 验证结果 / 需测试的路径 | `superpowers:requesting-code-review` + `superpowers:finishing-a-development-branch` |
 
 ## 规则
 
