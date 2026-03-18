@@ -4,15 +4,13 @@
 
 它们是**元流程**（meta-workflow）——不做具体编码，而是编排其他 skill 的执行顺序，确保走完整流程、不跳步。
 
-## Skills
+## 总览
 
-| Skill | 用途 | 核心理念 |
-|-------|------|---------|
-| [`/dev-go`](skills/dev-go.md) | 完整开发流程 | context sync → research → plan → execute → verify → knowledge sync → handback |
-| [`/dev-fix`](skills/dev-fix.md) | Bug 修复 | 根因定位 → 写失败测试（RED）→ 最小修复（GREEN）→ 验证修复路径 + 相邻路径 |
-| [`/dev-refactor`](skills/dev-refactor.md) | 代码重构 | 安全网（补测试）→ 小步重构 → 每步跑测试 → 行为不变 |
-
-## 三者关系
+| Skill | 用途 | 一句话 |
+|-------|------|--------|
+| [`/dev-go`](skills/dev-go.md) | 新功能开发 | 从需求到交付的完整流程 |
+| [`/dev-fix`](skills/dev-fix.md) | Bug 修复 | TDD 修复法：根因 → RED → GREEN → 验证 |
+| [`/dev-refactor`](skills/dev-refactor.md) | 代码重构 | 有安全网的小步重构，行为不变 |
 
 ```
 /dev-go      ─── 建新功能（全流程）
@@ -22,71 +20,105 @@
     └── 代码臭了 → /dev-refactor（另开分支，改完合回来）
 ```
 
-## 依赖关系
+---
 
-这三个 skill 是**编排层**，通过串联下游 skill 来工作。下表列出所有依赖：
+## `/dev-go` — 新功能开发流程
 
-### 下游 Skill 清单
+从零实现一个功能，覆盖从理解需求到代码交付的全部环节。是三个 skill 中最重的，串联了 8 个下游 skill。
 
-| 下游 Skill | 来源 | 职责 | 被谁调用 |
-|------------|------|------|---------|
-| `superpowers:brainstorming` | [superpowers](https://github.com/anthropics/claude-code-superpowers) | 需求模糊时引导探索和澄清 | `/dev-go` Phase 1 |
-| `superpowers:writing-plans` | superpowers | 产出结构化实施计划 | `/dev-go` Phase 2, `/dev-refactor` Phase 3 |
-| `superpowers:using-git-worktrees` | superpowers | 创建隔离 worktree 保护主分支 | `/dev-go` Phase 2b, `/dev-refactor` Phase 3b |
-| `superpowers:subagent-driven-development` | superpowers | 用 subagent 并行执行子任务 | `/dev-go` Phase 3, `/dev-refactor` Phase 4 |
-| `superpowers:systematic-debugging` | superpowers | 系统化定位 bug 根因 | `/dev-go` Phase 4, `/dev-fix` Phase 1 |
-| `superpowers:test-driven-development` | superpowers | TDD 红绿循环 | `/dev-fix` Phase 2-3, `/dev-refactor` Phase 2 |
-| `superpowers:verification-before-completion` | superpowers | 运行时验证，防止"编译过了就完事" | `/dev-go` Phase 4, `/dev-fix` Phase 4, `/dev-refactor` Phase 5 |
-| `superpowers:requesting-code-review` | superpowers | 派 code-reviewer 审查变更 | `/dev-go` Phase 6, `/dev-fix` Phase 6, `/dev-refactor` Phase 7 |
-| `superpowers:finishing-a-development-branch` | superpowers | 分支收尾（合并/清理） | `/dev-go` Phase 6 |
-| `commit` | Claude Code 内置 / 自定义 | 安全检查 + git commit | `/dev-fix` Phase 7, `/dev-refactor` Phase 8 |
+| Phase | 这一步做什么 | 调用的 Skill | Skill 做什么 |
+|-------|-------------|-------------|-------------|
+| **0. Context Sync** | `git status` + `git log -5`，重读 CLAUDE.md / MEMORY.md，确认工作区干净。发现异常 → 停下问用户 | — | — |
+| **1. Research** | 读相关代码和文档，理解现有架构。需求模糊时引导用户澄清 | `superpowers:brainstorming` | 用结构化提问帮用户把模糊想法变成明确需求 |
+| **2. Plan** | 产出实施计划，存到 `docs/plans/YYYY-MM-DD-<topic>.md` | `superpowers:writing-plans` | 生成带步骤、风险点、验收标准的结构化计划文档 |
+| **2b. Worktree** | 改动涉及 3+ 文件或需要 subagent 时，创建隔离 worktree | `superpowers:using-git-worktrees` | 在 `.claude/worktrees/` 创建独立工作副本，失败可整个丢弃 |
+| **3. Execute** | 按计划逐任务交给 subagent 执行 | `superpowers:subagent-driven-development` | 用 subagent（独立上下文）并行执行子任务，保护主窗口上下文 |
+| **3b. Diff Review** | 主窗口审查 `git diff`，检查 5 类高风险点（常量映射/返回值/组件显隐/import/回归） | — | — |
+| **4. Verify** | 应用启动无崩溃 + 关键路径运行时验证 | `superpowers:verification-before-completion` | 强制运行时验证，不允许"编译过了就完事" |
+| **4. Verify** *(遇到 bug 时)* | 验证阶段发现 bug → 切换到修复流程 | `superpowers:systematic-debugging` | 系统化收集证据、缩小范围、定位根因 |
+| **4b. E2E** | 涉及用户交互时，手动或脚本模拟完整操作路径 | — | — |
+| **5. Knowledge Sync** | 更新项目知识体系（L1 CLAUDE.md / L2 rules/ / L3 docs/INDEX.md） | — | — |
+| **6. Handback** | 重要改动先过 code review，产出交接报告（改了什么/验证结果/需测试的路径） | `superpowers:requesting-code-review` | 派独立 code-reviewer agent 审查代码质量 |
+| **6. Handback** *(分支收尾)* | 分支合并、清理临时文件 | `superpowers:finishing-a-development-branch` | 处理分支合并策略、清理 worktree、更新状态 |
 
-### 调用矩阵
+---
 
-哪个 skill 调用了哪些下游：
+## `/dev-fix` — Bug 修复流程
 
-| 下游 Skill | `/dev-go` | `/dev-fix` | `/dev-refactor` |
-|------------|:---------:|:----------:|:---------------:|
-| brainstorming | Phase 1 | — | — |
-| writing-plans | Phase 2 | — | Phase 3 |
-| using-git-worktrees | Phase 2b | — | Phase 3b |
-| subagent-driven-development | Phase 3 | — | Phase 4 |
-| systematic-debugging | Phase 4 | Phase 1 | — |
-| test-driven-development | — | Phase 2-3 | Phase 2 |
-| verification-before-completion | Phase 4 | Phase 4 | Phase 5 |
-| requesting-code-review | Phase 6 | Phase 6 | Phase 7 |
-| finishing-a-development-branch | Phase 6 | — | — |
-| commit | — | Phase 7 | Phase 8 |
+收到 bug 报告后的标准修复流程。核心是 TDD 修复法：先证明 bug 存在（RED），再写最小修复（GREEN）。串联 5 个下游 skill。
 
-### 互相调用
+| Phase | 这一步做什么 | 调用的 Skill | Skill 做什么 |
+|-------|-------------|-------------|-------------|
+| **0. Context Sync** | `git status` + `git log -5`，确认当前分支状态 | — | — |
+| **1. Root Cause** | 收集证据、复现问题、定位根因。**铁律：没找到根因不许进下一步** | `superpowers:systematic-debugging` | 引导系统化调试：日志分析 → 假设 → 最小复现 → 根因确认 |
+| **2. Test First** | 针对根因写一个会失败的测试（RED），确认测试确实失败 | `superpowers:test-driven-development` | TDD 红绿循环：先写失败测试，再写让测试通过的代码 |
+| **3. Minimal Fix** | 写最小修复代码让测试通过（GREEN），**不做额外重构** | `superpowers:test-driven-development` | 同上，确保只写刚好让测试绿的代码 |
+| **3b. Diff Review** | 审查 `git diff`：新增常量是否与现有约定一致、是否引入回归 | — | — |
+| **4. Verify** | 全量测试 + **运行时验证修复路径和相邻路径**（修了 A 模块 → 验证 B 模块没坏） | `superpowers:verification-before-completion` | 强制运行时验证，防止"修 A 坏 B" |
+| **5. Knowledge Sync** | 修复揭示了新陷阱？→ 写入 rules/ 或 CLAUDE.md，防止再犯 | — | — |
+| **6. Review** | 修复涉及 3+ 文件或核心逻辑时，派 code-reviewer 审查 | `superpowers:requesting-code-review` | 派独立 code-reviewer agent 审查修复质量 |
+| **7. Commit** | 安全检查 + 提交 | `commit` | 检查敏感文件、生成语义化 commit message、提交 |
 
-三个 dev skill 之间也存在调用关系：
+---
 
-- `/dev-go` Phase 4 遇到 bug → 调用 `/dev-fix`
-- `/dev-refactor` 发现 bug → 记录，另开 `/dev-fix`（不在重构分支修）
+## `/dev-refactor` — 代码重构流程
+
+改善代码结构，**不改变外部行为**。每一步必须可验证、可回退。串联 6 个下游 skill。
+
+| Phase | 这一步做什么 | 调用的 Skill | Skill 做什么 |
+|-------|-------------|-------------|-------------|
+| **0. Context Sync** | `git status` + `git log -5`，确认无未提交变更。有脏状态 → 先 commit 或 stash | — | — |
+| **1. 现状分析** | 识别代码坏味道：大文件（>300行）、重复代码、过度耦合、职责混乱。产出问题清单 | — | — |
+| **2. 安全网** | 检查测试覆盖率。覆盖不足 → **先补测试再重构**。没有测试保护的代码不允许重构 | `superpowers:test-driven-development` | 补充缺失的测试用例，建立重构的安全网 |
+| **3. Plan** | 拆成小步骤，每步只做一件事（提取函数/移动文件/重命名/拆分模块） | `superpowers:writing-plans` | 生成结构化重构计划，每步粒度要小到能单步 `git revert` |
+| **3b. Worktree** | **必须隔离**，重构出问题时可以整个丢弃 | `superpowers:using-git-worktrees` | 创建独立工作副本，重构失败可零成本回退 |
+| **4. Execute** | 逐步执行，**每步之后跑测试**。测试红 → 立即回退该步，不继续 | `superpowers:subagent-driven-development` | 用 subagent 执行每个重构步骤，每步后自动验证 |
+| **4b. Diff Review** | 审查 `git diff`：确认只有结构变化、无行为变化、无遗漏的依赖关系 | — | — |
+| **5. Verify** | 全量测试 + 应用启动 + 关键路径运行时验证 | `superpowers:verification-before-completion` | 强制运行时验证，确保重构没有偷偷改变行为 |
+| **6. Knowledge Sync** | 架构变了 → 更新 CLAUDE.md；模块规则变了 → 更新 rules/；plan 完成 → 更新 INDEX.md | — | — |
+| **7. Review** | 派 code-reviewer 审查重构质量 | `superpowers:requesting-code-review` | 审查重构是否保持了公共 API 契约、是否引入不必要的复杂度 |
+| **8. Commit** | 提交 | `commit` | 安全检查 + 语义化 commit message |
+
+---
+
+## 下游 Skill 速查
+
+所有被引用的下游 skill 汇总：
+
+| Skill | 来源 | 一句话职责 | 被调用次数 |
+|-------|------|-----------|:---------:|
+| `superpowers:verification-before-completion` | [superpowers] | 运行时验证，防止"编译过了就完事" | 3 |
+| `superpowers:requesting-code-review` | [superpowers] | 派 code-reviewer agent 审查变更 | 3 |
+| `superpowers:test-driven-development` | [superpowers] | TDD 红绿循环 | 3 |
+| `superpowers:subagent-driven-development` | [superpowers] | 用 subagent 并行执行子任务 | 2 |
+| `superpowers:writing-plans` | [superpowers] | 生成结构化实施计划 | 2 |
+| `superpowers:using-git-worktrees` | [superpowers] | 创建隔离 worktree | 2 |
+| `superpowers:systematic-debugging` | [superpowers] | 系统化定位 bug 根因 | 2 |
+| `superpowers:brainstorming` | [superpowers] | 引导需求探索和澄清 | 1 |
+| `superpowers:finishing-a-development-branch` | [superpowers] | 分支收尾（合并/清理） | 1 |
+| `commit` | 内置 / 自定义 | 安全检查 + git commit | 2 |
+
+[superpowers]: https://github.com/anthropics/claude-code-superpowers
+
+---
 
 ## 共享设计原则
 
-1. **不自动 commit**，等用户确认
-2. **Phase 0 同步上下文**（git status + 项目记忆）
-3. **Knowledge Sync**（每次完成都更新项目知识体系）
-4. **Diff Review** 在 subagent 返回后必做
-5. **运行时验证** > 编译通过
+1. **不自动 commit** — 等用户确认
+2. **Phase 0 同步上下文** — git status + 项目记忆，在脏状态上不开工
+3. **Knowledge Sync** — 每次完成都更新项目知识体系（L1/L2/L3 三层）
+4. **Diff Review** — subagent 返回后必须人工审查 diff
+5. **运行时验证 > 编译通过** — 必须实际跑起来，不只是语法正确
 
 ## 前置依赖
 
-使用这些 skill 前需要安装：
-
-1. **[Claude Code Superpowers](https://github.com/anthropics/claude-code-superpowers)** — 提供 9 个下游 skill
-   ```bash
-   # 按 superpowers 项目的安装说明操作
-   ```
-
-2. **commit skill** — Claude Code 内置或自定义的 `/commit` 命令
+| 依赖 | 说明 |
+|------|------|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) | Anthropic 官方 CLI |
+| [Claude Code Superpowers](https://github.com/anthropics/claude-code-superpowers) | 提供 9 个下游 skill |
+| `commit` skill | Claude Code 内置或自定义的 `/commit` 命令 |
 
 ## 安装
-
-复制 `skills/` 下的 `.md` 文件到你的 Claude Code 命令目录：
 
 ```bash
 # 全局安装（所有项目可用）
