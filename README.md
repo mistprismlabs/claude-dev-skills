@@ -33,7 +33,7 @@
 | **2. Plan** | 产出实施计划，存到 `docs/plans/YYYY-MM-DD-<topic>.md` | `superpowers:writing-plans` | 生成带步骤、风险点、验收标准的结构化计划文档 |
 | **2b. Worktree** | 改动涉及 3+ 文件或需要 subagent 时，创建隔离 worktree | `superpowers:using-git-worktrees` | 在 `.claude/worktrees/` 创建独立工作副本，失败可整个丢弃 |
 | **3. Execute** | 按计划逐任务交给 subagent 执行 | `superpowers:subagent-driven-development` | 用 subagent（独立上下文）并行执行子任务，保护主窗口上下文 |
-| **3b. Diff Review** | 主窗口审查 `git diff`，检查 5 类高风险点（常量映射/返回值/组件显隐/import/回归） | — | — |
+| **3b. Diff Review** | 主窗口审查 `git diff`，检查 5 类高风险点（常量映射/返回值/条件逻辑/import/回归） | — | — |
 | **4. Verify** | 应用启动无崩溃 + 关键路径运行时验证 | `superpowers:verification-before-completion` | 强制运行时验证，不允许"编译过了就完事" |
 | **4. Verify** *(遇到 bug 时)* | 验证阶段发现 bug → 切换到修复流程 | `superpowers:systematic-debugging` | 系统化收集证据、缩小范围、定位根因 |
 | **4b. E2E** | 涉及用户交互时，手动或脚本模拟完整操作路径 | — | — |
