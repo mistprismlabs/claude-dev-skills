@@ -1,6 +1,6 @@
 # Claude Dev Skills
 
-三个开发流程编排 skill，用于 [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)。
+四个开发流程编排 skill，用于 [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)。
 
 它们是**元流程**（meta-workflow）——不做具体编码，而是编排其他 skill 的执行顺序，确保走完整流程、不跳步。
 
@@ -8,12 +8,19 @@
 
 | Skill | 用途 | 一句话 |
 |-------|------|--------|
+| [`/dev-clarify`](skills/dev-clarify.md) | **需求澄清** | 需求模糊时先跑，产出 dev-go 可直接执行的文档 |
 | [`/dev-go`](skills/dev-go.md) | 新功能开发 | 从需求到交付的完整流程 |
 | [`/dev-fix`](skills/dev-fix.md) | Bug 修复 | TDD 修复法：根因 → RED → GREEN → 验证 |
 | [`/dev-refactor`](skills/dev-refactor.md) | 代码重构 | 有安全网的小步重构，行为不变 |
 
 ```
-/dev-go      ─── 建新功能（全流程）
+需求模糊？
+    │
+    ↓
+/dev-clarify ─── 澄清需求，产出文档
+    │
+    ↓
+/dev-go      ─── 开发新功能（全流程）
     │
     ├── 遇到 bug → /dev-fix（修完回来继续）
     │
@@ -22,9 +29,25 @@
 
 ---
 
+## `/dev-clarify` — 需求澄清流程
+
+需求模糊时的入口。扮演产品经理角色，通过结构化对话把模糊想法转化为 dev-go 可直接执行的需求文档。
+
+| Phase | 这一步做什么 |
+|-------|-------------|
+| **0. 层级诊断** | 判断需求在 L0（冲动）到 L4（可执行）的哪层，检测方案污染 |
+| **1. 方案分离** | 检测到"用 X 做 Y"时，剥离方案，先搞清楚问题本身 |
+| **2. 逐层下降** | 一次一问，引导用户下降到 L3-L4；答不出给选项 |
+| **3. 六问验证** | 收集 WHO / AS-IS / PAIN / WHY / DONE / LIMIT |
+| **4. 三重校验** | 可行性、矛盾检测、需求重构 |
+| **5. 技术方案推介** | 推介 2-3 个方案，用户选定，写入文档 |
+| **6. 文档产出 → dev-go** | 输出结构化需求文档，直接移交 dev-go 执行 |
+
+---
+
 ## `/dev-go` — 新功能开发流程
 
-从零实现一个功能，覆盖从理解需求到代码交付的全部环节。是三个 skill 中最重的，串联了 8 个下游 skill。
+从零实现一个功能，覆盖从理解需求到代码交付的全部环节。是四个 skill 中最重的，串联了 8 个下游 skill。
 
 | Phase | 这一步做什么 | 调用的 Skill | Skill 做什么 |
 |-------|-------------|-------------|-------------|

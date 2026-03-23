@@ -4,6 +4,8 @@ description: 完整开发流程编排：context check → research → plan → 
 
 # /dev-go — 开发全流程编排
 
+> 需求模糊？先跑 `/dev-clarify` 产出需求文档，再回来执行这个。
+
 收到任务后按以下顺序执行，不跳过阶段。
 
 ## 流程
