@@ -18,6 +18,7 @@ description: 完整开发流程编排：context check → research → plan → 
 | 2b. Worktree | 3+ 文件或使用 subagent 时必须先建 | `superpowers:using-git-worktrees` |
 | 3. Execute | subagent 逐任务执行（见下方 subagent 规则） | `superpowers:subagent-driven-development` |
 | 3b. Diff Review | 主窗口审查 `git diff`，重点检查关键变更点（见下方规则） | — |
+| 3c. Codex Review | Codex 可用时**必须执行**，不可用则跳过（见下方 Codex 检测规则）。`/codex:review` 做独立审查，多文件或核心逻辑改动时用 `/codex:adversarial-review` | `codex:review` |
 | 4. Verify | 应用无崩溃 + 关键路径运行时验证。有 bug → /dev-fix | `superpowers:verification-before-completion` + `superpowers:systematic-debugging` |
 | 4b. E2E | 涉及用户交互流程时，手动或脚本模拟操作路径 | — |
 | 5. Knowledge Sync | **更新知识体系**（见下方规则） | — |
@@ -48,6 +49,14 @@ subagent 返回后，主窗口 `git diff` 检查以下高风险点：
 - **现有代码影响**：改了共享函数后，原有模块的逻辑是否仍然正确
 
 发现问题 → 当场修复后再进 Phase 4，不要带着问题往后走。
+
+## Codex 检测规则（Phase 0 执行，Phase 3c 使用）
+
+Phase 0 时运行 `which codex` 检测 Codex CLI：
+
+1. **有 CLI + 有 `codex:review` skill** → Phase 3c 必须执行
+2. **有 CLI + 没有插件** → 提示用户："检测到本机已安装 Codex CLI，是否安装 Claude Code 插件以启用独立代码审查？"并给出安装步骤。用户同意则安装后执行 Phase 3c，拒绝则跳过
+3. **没有 CLI** → 跳过 Phase 3c
 
 ## 知识沉淀（Phase 5 必做）
 
